@@ -1,12 +1,14 @@
-const { JSDOM } = require("jsdom");
-const { createSecureContext } = require("tls");
+const { JSDOM } = require("jsdom"); // Imports the JSDOM library for parsing HTML
+const { createSecureContext } = require("tls"); // Imports createSecureContext from tls
 
+// Asynchronous function to crawl a webpage
 async function crawlPage(currentURL) {
   console.log(`actively crawling ${currentURL}`);
 
   try {
-    const resp = await fetch(currentURL);
+    const resp = await fetch(currentURL); // Performs an HTTP request to the URL
 
+    // Checks if the response has an error status (400 or higher)
     if (resp.status > 399) {
       console.log(
         `error in fetch with status code: ${resp.status} on page ${currentURL} `
@@ -14,56 +16,60 @@ async function crawlPage(currentURL) {
       return;
     }
 
-    const contentType = resp.headers.get("content-type");
+    const contentType = resp.headers.get("content-type"); // Checks the content type of the response
     if (!contentType.includes("text/html")) {
       console.log(
-        `non html response content type: ${contentType} on page ${currentURL} `
+        `non-html response content type: ${contentType} on page ${currentURL} `
       );
       return;
     }
 
-    console.log(await resp.text());
+    console.log(await resp.text()); // Logs the HTML content of the page
   } catch (err) {
-    console.log(`error in fetch ${currentURL}`);
+    console.log(`error in fetch ${currentURL}`); // Handles network errors
   }
 }
 
+// Function extracts all links from an HTML page and returns a list of URLs
 function getURLFromHTML(htmlBody, baseURL) {
   const urls = [];
-  const dom = new JSDOM(htmlBody);
-  const linkElements = dom.window.document.querySelectorAll("a");
+  const dom = new JSDOM(htmlBody); // Creates a DOM object from the HTML string
+  const linkElements = dom.window.document.querySelectorAll("a"); // Finds all <a> elements
+
   for (const linkElement of linkElements) {
     if (linkElement.href.slice(0, 1) === "/") {
-      //relative
+      // If the link is relative (starts with "/")
       try {
-        const urlObj = new URL(`${baseURL}${linkElement.href}`);
+        const urlObj = new URL(`${baseURL}${linkElement.href}`); // Creates an absolute URL
         urls.push(urlObj.href);
       } catch (err) {
-        console.log(`error with relative url: ${err.massage}`);
+        console.log(`error with relative url: ${err.message}`); // Error handling
       }
     } else {
-      //absolute
+      // If the link is absolute
       try {
         const urlObj = new URL(linkElement.href);
         urls.push(urlObj.href);
       } catch (err) {
-        console.log(`error with absolute url: ${err.massage}`);
+        console.log(`error with absolute url: ${err.message}`);
       }
     }
   }
 
-  return urls;
+  return urls; // Returns the list of extracted URLs
 }
 
+// Function normalizes a URL by removing the protocol and trailing slash at the end
 function normalizeURL(urlString) {
   const urlObj = new URL(urlString);
   const hostPath = `${urlObj.hostname}${urlObj.pathname}`;
   if (hostPath.length > 0 && hostPath.slice(-1) === "/") {
-    return hostPath.slice(0, -1);
+    return hostPath.slice(0, -1); // Removes the trailing "/" if present
   }
   return hostPath;
 }
 
+// Exports the functions for use in other modules
 module.exports = {
   normalizeURL,
   getURLFromHTML,

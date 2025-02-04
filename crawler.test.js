@@ -1,6 +1,7 @@
-const { normalizeURL, getURLFromHTML } = require("./crawler");
-const { test, expect } = require("@jest/globals");
+const { normalizeURL, getURLFromHTML } = require("./crawler"); // Imports functions from crawler.js
+const { test, expect } = require("@jest/globals"); // Imports Jest testing functions
 
+// Test: Normalize URL by removing the protocol
 test("normalizeURL strip protocol", () => {
   const input = "https://service.muelheim-ruhr.de/test";
   const actual = normalizeURL(input);
@@ -8,6 +9,7 @@ test("normalizeURL strip protocol", () => {
   expect(actual).toEqual(expected);
 });
 
+// Test: Normalize URL by removing the trailing slash
 test("normalizeURL strip trailing slash", () => {
   const input = "https://service.muelheim-ruhr.de/Test/";
   const actual = normalizeURL(input);
@@ -15,6 +17,7 @@ test("normalizeURL strip trailing slash", () => {
   expect(actual).toEqual(expected);
 });
 
+// Test: Normalize URL by converting uppercase letters to lowercase
 test("normalizeURL capitals", () => {
   const input = "https://SERVIce.muelheim-ruhr.de/Test";
   const actual = normalizeURL(input);
@@ -22,6 +25,7 @@ test("normalizeURL capitals", () => {
   expect(actual).toEqual(expected);
 });
 
+// Test: Normalize URL by removing 'http' protocol
 test("normalizeURL strip http", () => {
   const input = "http://service.muelheim-ruhr.de/Test";
   const actual = normalizeURL(input);
@@ -29,6 +33,7 @@ test("normalizeURL strip http", () => {
   expect(actual).toEqual(expected);
 });
 
+// Test: Extract absolute URL from an HTML string
 test("getURLsFromHTML absolute", () => {
   const inputHTMLBody = `
     <html>
@@ -39,13 +44,13 @@ test("getURLsFromHTML absolute", () => {
         </body>
     </html>
     `;
-
   const inputBaseURL = "https://service.muelheim-ruhr.de/href/";
   const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
   const expected = ["https://service.muelheim-ruhr.de/href/"];
   expect(actual).toEqual(expected);
 });
 
+// Test: Extract relative URL and convert to absolute
 test("getURLsFromHTML relative", () => {
   const inputHTMLBody = `
       <html>
@@ -56,13 +61,13 @@ test("getURLsFromHTML relative", () => {
           </body>
       </html>
       `;
-
   const inputBaseURL = "https://service.muelheim-ruhr.de";
   const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
   const expected = ["https://service.muelheim-ruhr.de/href/"];
   expect(actual).toEqual(expected);
 });
 
+// Test: Extract both relative and absolute URLs from an HTML string
 test("getURLsFromHTML relative and absolute", () => {
   const inputHTMLBody = `
         <html>
@@ -76,7 +81,6 @@ test("getURLsFromHTML relative and absolute", () => {
             </body>
         </html>
         `;
-
   const inputBaseURL = "https://service.muelheim-ruhr.de";
   const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
   const expected = [
@@ -86,6 +90,7 @@ test("getURLsFromHTML relative and absolute", () => {
   expect(actual).toEqual(expected);
 });
 
+// Test: Ignore invalid URLs in an HTML string
 test("getURLsFromHTML invalid", () => {
   const inputHTMLBody = `
           <html>
@@ -93,11 +98,9 @@ test("getURLsFromHTML invalid", () => {
                   <a href="invalid">
                       Invalid URL
                   </a>
-
               </body>
           </html>
           `;
-
   const inputBaseURL = "https://service.muelheim-ruhr.de";
   const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
   const expected = [];
