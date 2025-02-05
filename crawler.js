@@ -2,7 +2,22 @@ const { JSDOM } = require("jsdom"); // Imports the JSDOM library for parsing HTM
 const { createSecureContext } = require("tls"); // Imports createSecureContext from tls
 
 // Asynchronous function to crawl a webpage
-async function crawlPage(currentURL) {
+async function crawlPage(baseURL, currentURL, pages) {
+  const baseURLObj = new URL(baseURL);
+  const currentURLObj = new URL(currentURL);
+
+  if (baseURLObj.hostname !== currentURLObj.hostname) {
+    return pages;
+  }
+
+  const normalizedCurrentURL = normalizeURL(currentURL);
+
+  if (pages[normalizedCurrentURL] > 0) {
+    pages[normalizedCurrentURL]++;
+    return pages;
+  }
+
+  pages[normalizedCurrentURL] = 1;
   console.log(`actively crawling ${currentURL}`);
 
   try {
@@ -13,7 +28,7 @@ async function crawlPage(currentURL) {
       console.log(
         `error in fetch with status code: ${resp.status} on page ${currentURL} `
       );
-      return;
+      return pages;
     }
 
     const contentType = resp.headers.get("content-type"); // Checks the content type of the response
@@ -21,13 +36,20 @@ async function crawlPage(currentURL) {
       console.log(
         `non-html response content type: ${contentType} on page ${currentURL} `
       );
-      return;
+      return pages;
     }
 
-    console.log(await resp.text()); // Logs the HTML content of the page
+    const htmlBody = await resp.text();
+
+    nextUrls = getURLFromHTML(htmlBody, baseURL);
+
+    for (const nextURL of nextUrls) {
+      pages = await crawlPage(baseURL, nextURL, pages);
+    }
   } catch (err) {
     console.log(`error in fetch ${currentURL}`); // Handles network errors
   }
+  return pages;
 }
 
 // Function extracts all links from an HTML page and returns a list of URLs
