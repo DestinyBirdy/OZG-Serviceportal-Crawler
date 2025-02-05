@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Export to Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <button onclick="exportData()">Exportiere Report</button>
+
+    <script>
+      // Dein Report
+      let filteredPages = {
+        "page1.com": 5,
+        "page2.com": 8,
+        "page3.com": 3,
+      };
+
+      // Die Daten, die in die Excel-Datei geschrieben werden sollen
+      let data = [["URL", "Hits"]]; // Kopfzeile der Excel-Datei
+
+      // Die URLs und Hits aus dem Report hinzufügen
+      for (const sortedPage in filteredPages) {
+        const url = sortedPage;
+        const hits = filteredPages[sortedPage];
+        data.push([url, hits]);
+      }
+
+      // Funktion zum Exportieren der Daten in Excel
+      function exportData() {
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        XLSX.writeFile(wb, "report.xlsx");
+      }
+    </script>
+  </body>
+</html>
