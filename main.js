@@ -1,4 +1,5 @@
 const { crawlPage } = require("./crawler.js"); // Imports the crawlPage function from crawler.js
+const { printReport } = require("./report.js");
 
 async function main() {
   if (process.argv.length < 3) {
@@ -12,9 +13,6 @@ async function main() {
   const baseURL = process.argv[2]; // Reads the website URL from command line arguments
   console.log(`starting crawl of ${baseURL}`); // Logs a message indicating that crawling is starting
   const pages = await crawlPage(baseURL, baseURL, {}); // Starts crawling the specified website
-  for (const page of Object.entries(pages)) {
-    console.log(page);
-  }
-  console.log("Crawling finished!");
+  printReport(pages);
 }
 main(); // Executes the main function
