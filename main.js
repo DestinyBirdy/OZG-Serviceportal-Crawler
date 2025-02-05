@@ -1,5 +1,6 @@
 const { crawlPage } = require("./crawler.js"); // Imports the crawlPage function from crawler.js
 const { printReport } = require("./report.js");
+const { downloadAndParseRSS } = require("./parseRSS.js");
 
 async function main() {
   if (process.argv.length < 3) {
@@ -15,4 +16,8 @@ async function main() {
   const pages = await crawlPage(baseURL, baseURL, {}); // Starts crawling the specified website
   printReport(pages);
 }
-main(); // Executes the main function
+//main(); // Executes the main function
+downloadAndParseRSS(
+  "https://fimportal.de/tools/rss/services",
+  "99093049019002"
+);

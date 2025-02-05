@@ -1,108 +1,86 @@
-const { JSDOM } = require("jsdom"); // Imports the JSDOM library for parsing HTML and extracting links
-const { createSecureContext } = require("tls"); // Imports createSecureContext from the TLS module (not used in this script)
+const { JSDOM } = require("jsdom");
 
-// Asynchronous function to crawl a webpage and extract links
 async function crawlPage(baseURL, currentURL, pages) {
-  const baseURLObj = new URL(baseURL); // Parse the base URL
-  const currentURLObj = new URL(currentURL); // Parse the current URL
+  const baseURLObj = new URL(baseURL);
+  const currentURLObj = new URL(currentURL);
 
-  // Ignore URLs from different domains
   if (baseURLObj.hostname !== currentURLObj.hostname) {
     return pages;
   }
 
-  const normalizedCurrentURL = normalizeURL(currentURL); // Normalize the URL
+  const normalizedCurrentURL = normalizeURL(currentURL);
 
-  // If the page has already been crawled, increment the count
-  if (pages[normalizedCurrentURL] > 0) {
-    pages[normalizedCurrentURL]++;
+  if (pages[normalizedCurrentURL]) {
+    pages[normalizedCurrentURL].count++;
     return pages;
   }
 
-  // Otherwise, mark this URL as visited and initialize the count
-  pages[normalizedCurrentURL] = 1;
+  pages[normalizedCurrentURL] = { count: 1, schluessel: null };
   console.log(`Actively crawling ${currentURL}`);
 
   try {
-    const resp = await fetch(currentURL); // Perform an HTTP request to fetch the page content
-
-    // Handle HTTP response errors (status 400 and above)
+    const resp = await fetch(currentURL);
     if (resp.status > 399) {
-      console.log(
-        `Error in fetch with status code: ${resp.status} on page ${currentURL}`
-      );
+      console.log(`Error ${resp.status} on page ${currentURL}`);
       return pages;
     }
 
-    // Check if the response is an HTML page
     const contentType = resp.headers.get("content-type");
     if (!contentType.includes("text/html")) {
-      console.log(
-        `Non-HTML response content type: ${contentType} on page ${currentURL}`
-      );
+      console.log(`Non-HTML content: ${contentType} on ${currentURL}`);
       return pages;
     }
 
-    // Extract the HTML content from the response
     const htmlBody = await resp.text();
+    pages[normalizedCurrentURL].schluessel = extractSchluessel(htmlBody);
 
-    // Extract all URLs from the HTML content
     const nextUrls = getURLFromHTML(htmlBody, baseURL);
-
-    // Recursively crawl all extracted URLs
     for (const nextURL of nextUrls) {
       pages = await crawlPage(baseURL, nextURL, pages);
     }
   } catch (err) {
-    console.log(`Error in fetch ${currentURL}`); // Handle network errors
+    console.log(`Fetch error on ${currentURL}: ${err.message}`);
   }
-  return pages; // Return the updated list of crawled pages
+  return pages;
 }
 
-// Function to extract all links from an HTML page and return a list of URLs
 function getURLFromHTML(htmlBody, baseURL) {
   const urls = [];
-  const dom = new JSDOM(htmlBody); // Parse the HTML content into a DOM structure
-  const linkElements = dom.window.document.querySelectorAll("a"); // Select all anchor elements
+  const dom = new JSDOM(htmlBody);
+  const linkElements = dom.window.document.querySelectorAll("a");
 
   for (const linkElement of linkElements) {
-    if (linkElement.href.startsWith("/")) {
-      // If the link is relative (starts with "/"), convert it to an absolute URL
-      try {
-        const urlObj = new URL(`${baseURL}${linkElement.href}`);
-        urls.push(urlObj.href);
-      } catch (err) {
-        console.log(`Error with relative URL: ${err.message}`);
-      }
-    } else {
-      // If the link is absolute, validate and add it
-      try {
-        const urlObj = new URL(linkElement.href);
-        urls.push(urlObj.href);
-      } catch (err) {
-        console.log(`Error with absolute URL: ${err.message}`);
-      }
+    try {
+      const url = new URL(
+        linkElement.href.startsWith("/")
+          ? `${baseURL}${linkElement.href}`
+          : linkElement.href
+      );
+      urls.push(url.href);
+    } catch (err) {
+      console.log(`URL error: ${err.message}`);
     }
   }
-
-  return urls; // Return the list of extracted URLs
+  return urls;
 }
 
-// Function to normalize a URL by removing the protocol and any trailing slash
+function extractSchluessel(htmlBody) {
+  const dom = new JSDOM(htmlBody);
+  const schluesselElement = dom.window.document.querySelector(
+    "[property='schluessel']"
+  );
+  return schluesselElement ? schluesselElement.getAttribute("content") : null;
+}
+
 function normalizeURL(urlString) {
   const urlObj = new URL(urlString);
-  const hostPath = `${urlObj.hostname}${urlObj.pathname}`; // Extract hostname and path
-
-  // Remove trailing slash if it exists
-  if (hostPath.length > 0 && hostPath.endsWith("/")) {
-    return hostPath.slice(0, -1);
-  }
-  return hostPath;
+  let path = `${urlObj.hostname}${urlObj.pathname}`;
+  return path.endsWith("/") ? path.slice(0, -1) : path;
 }
 
-// Export functions for use in other modules
 module.exports = {
   normalizeURL,
   getURLFromHTML,
   crawlPage,
+  extractSchluessel,
 };
