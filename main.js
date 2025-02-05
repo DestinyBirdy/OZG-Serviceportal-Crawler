@@ -16,8 +16,7 @@ async function main() {
   const pages = await crawlPage(baseURL, baseURL, {}); // Starts crawling the specified website
   printReport(pages);
 }
-//main(); // Executes the main function
-downloadAndParseRSS(
-  "https://fimportal.de/tools/rss/services",
-  "99093049019002"
-);
+main(); // Executes the main function
+//downloadAndParseRSS(
+"https://fimportal.de/tools/rss/services", "99093049019002";
+//);
