@@ -25,7 +25,7 @@ function printReport(pages) {
     return {
       URL: sortedPage[0], // Page URL
       Hits: sortedPage[1].count, // Number of hits for the page
-      Key: sortedPage[1].key || "N/A", // The 'key' or 'N/A' if not available
+      Key: sortedPage[1].schluessel || "N/A", // The 'key' or 'N/A' if not available
 
       // Add number errors and abbreviation errors to separate columns
       NumberErrors: sortedPage[1].numberErrors
@@ -60,7 +60,7 @@ function printReport(pages) {
   for (const sortedPage of filteredPages) {
     console.log(
       `Found ${sortedPage[1].count} hits for page ${sortedPage[0]} with Key: ${
-        sortedPage[1].key || "N/A"
+        sortedPage[1].schluessel || "N/A"
       }`
     );
     console.log(
