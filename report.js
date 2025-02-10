@@ -1,55 +1,57 @@
-const fs = require("fs"); // File system module for interacting with files (though not used in the code directly)
-const path = require("path"); // Path module for working with file paths
-const XLSX = require("xlsx"); // Library for creating and handling Excel files
+const fs = require("fs");
+const path = require("path");
+const XLSX = require("xlsx");
+const { analyzeErrors } = require("./crawler"); // Funktion aus crawler.js einbinden
 
-// Function that generates and prints a report based on pages' data
 function printReport(pages) {
   console.log("==============");
   console.log("REPORT");
   console.log("==============");
 
-  // Sorts the pages by their 'count' property in descending order
+  // Fehleranalyse durchführen
+  analyzeErrors(pages);
+
+  // Seiten nach 'count' in absteigender Reihenfolge sortieren
   const sortedPages = sortPages(pages);
 
-  // Filters pages where the URL starts with 'service.muelheim-ruhr.de/leistung/'
+  // Seiten filtern, die mit der URL 'service.muelheim-ruhr.de/leistung/' beginnen
   const filteredPages = sortedPages.filter((sortedPage) =>
     sortedPage[0].startsWith("service.muelheim-ruhr.de/leistung/")
   );
 
-  // Maps the filtered pages to a simplified structure containing URL, Hits, and Schluessel (key)
+  // Mapping der gefilterten Seiten zu einem einfacheren Datenformat
   const reportData = filteredPages.map((sortedPage) => {
     return {
-      URL: sortedPage[0], // Page URL
-      Hits: sortedPage[1].count, // Number of hits for the page
-      Schluessel: sortedPage[1].schluessel || "N/A", // The 'schluessel' (key) or 'N/A' if not available
+      URL: sortedPage[0], // Seiten-URL
+      Hits: sortedPage[1].count, // Anzahl der Hits auf der Seite
+      Schluessel: sortedPage[1].schluessel || "N/A", // Schlüssel der Seite
+      Fehler: sortedPage[1].fehler ? sortedPage[1].fehler.join(", ") : "Keine Fehler" // Fehler, falls vorhanden
     };
   });
 
-  // Converts the report data (JSON format) into a worksheet
+  // Umwandeln der Report-Daten in ein Excel-Arbeitsblatt
   const ws = XLSX.utils.json_to_sheet(reportData);
 
-  // Creates a new workbook and appends the worksheet
+  // Erstellen eines neuen Arbeitsbuchs und Hinzufügen des Arbeitsblatts
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Report");
 
-  // Gets the file path for saving the report on the desktop
+  // Datei speichern auf dem Desktop
   const desktopPath = path.join(
-    require("os").homedir(), // Gets the user's home directory
-    "Desktop", // Path to the Desktop folder
-    "report.xlsx" // The name of the file to save
+    require("os").homedir(),
+    "Desktop",
+    "report.xlsx"
   );
 
-  // Writes the Excel file to the specified path (desktop)
+  // Excel-Datei speichern
   XLSX.writeFile(wb, desktopPath);
 
   console.log(`Excel report saved to: ${desktopPath}`);
 
-  // Logs the filtered pages with their 'count' and 'schluessel' to the console
+  // Geloggte gefilterte Seiten mit Anzahl der Hits und Fehler
   for (const sortedPage of filteredPages) {
     console.log(
-      `Found ${sortedPage[1].count} links to page ${
-        sortedPage[0]
-      } with Schluessel: ${sortedPage[1].schluessel || "N/A"}`
+      `Found ${sortedPage[1].count} hits for page ${sortedPage[0]} with Schluessel: ${sortedPage[1].schluessel || "N/A"} and Errors: ${sortedPage[1].fehler ? sortedPage[1].fehler.join(", ") : "Keine Fehler"}`
     );
   }
 
@@ -58,12 +60,16 @@ function printReport(pages) {
   console.log("==============");
 }
 
-// Function to sort the pages based on their 'count' in descending order
+// Funktion zum Sortieren der Seiten basierend auf der Anzahl der Hits
 function sortPages(pages) {
   return Object.entries(pages).sort((a, b) => b[1].count - a[1].count);
 }
 
-// Exports the functions to make them available outside of this module
+// Funktion, die den Abgleich mit dem RSS-Feed ermöglichen könnte
+function matchRSSToReport() {
+  // Hier könnte eine Logik für den Abgleich mit RSS implementiert werden
+}
+
 module.exports = {
   sortPages,
   printReport,
