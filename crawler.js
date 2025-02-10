@@ -1,29 +1,5 @@
 const { JSDOM } = require("jsdom");
-
-// Liste ausgeschriebener Zahlen und unerwünschter Abkürzungen
-const zahlenAlsWort = [
-  "eins",
-  "zwei",
-  "drei",
-  "vier",
-  "fünf",
-  "sechs",
-  "sieben",
-  "acht",
-  "neun",
-  "zehn",
-  "elf",
-  "zwölf",
-  "dreizehn",
-  "vierzehn",
-  "fünfzehn",
-  "sechzehn",
-  "siebzehn",
-  "achtzehn",
-  "neunzehn",
-  "zwanzig",
-];
-const abkuerzungen = ["bzw.", "etc.", "u.a.", "d.h."];
+const { numberWords, abbreviations } = require("./config");
 
 async function crawlPage(baseURL, currentURL, pages) {
   const baseURLObj = new URL(baseURL);
@@ -71,32 +47,45 @@ async function crawlPage(baseURL, currentURL, pages) {
   return pages;
 }
 
-// Neue Funktion zur Fehlerprüfung für alle Einträge am Ende
 function analyzeErrors(pages) {
   for (const [url, data] of Object.entries(pages)) {
-    pages[url].fehler = findErrors(data.htmlBody);
-    delete pages[url].htmlBody; // Speicher sparen nach der Analyse
+    // Find errors in the page's HTML body
+    const { numberErrors, abbreviationErrors } = findErrors(data.htmlBody);
+
+    // Add the errors to the page data
+    pages[url].numberErrors = numberErrors;
+    pages[url].abbreviationErrors = abbreviationErrors;
+
+    // Remove the HTML body after analysis to save memory
+    delete pages[url].htmlBody;
   }
 }
 
 function findErrors(htmlBody) {
-  const errors = [];
+  const numberErrors = [];
+  const abbreviationErrors = [];
   const dom = new JSDOM(htmlBody);
   const textContent = dom.window.document.body.textContent.toLowerCase();
 
-  zahlenAlsWort.forEach((zahl) => {
-    if (textContent.includes(zahl)) {
-      errors.push(`Zahl als Wort: ${zahl}`);
+  // Search for number words and add them to the error list
+  numberWords.forEach((word) => {
+    if (textContent.includes(word)) {
+      numberErrors.push(word);
     }
   });
 
-  abkuerzungen.forEach((abk) => {
-    if (textContent.includes(abk)) {
-      errors.push(`Abkürzung gefunden: ${abk}`);
+  // Search for abbreviations and add them to the error list
+  abbreviations.forEach((abbr) => {
+    if (textContent.includes(abbr)) {
+      abbreviationErrors.push(abbr);
     }
   });
 
-  return errors;
+  // Return both categories of errors
+  return {
+    numberErrors,
+    abbreviationErrors,
+  };
 }
 
 function normalizeURL(urlString) {

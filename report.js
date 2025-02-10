@@ -1,57 +1,81 @@
 const fs = require("fs");
 const path = require("path");
 const XLSX = require("xlsx");
-const { analyzeErrors } = require("./crawler"); // Funktion aus crawler.js einbinden
+const { analyzeErrors } = require("./crawler"); // Function imported from crawler.js
 
+// Function that generates and prints a report based on pages' data
 function printReport(pages) {
   console.log("==============");
   console.log("REPORT");
   console.log("==============");
 
-  // Fehleranalyse durchführen
+  // Perform error analysis
   analyzeErrors(pages);
 
-  // Seiten nach 'count' in absteigender Reihenfolge sortieren
+  // Sort the pages by their 'count' in descending order
   const sortedPages = sortPages(pages);
 
-  // Seiten filtern, die mit der URL 'service.muelheim-ruhr.de/leistung/' beginnen
+  // Filter pages where the URL starts with 'service.muelheim-ruhr.de/leistung/'
   const filteredPages = sortedPages.filter((sortedPage) =>
     sortedPage[0].startsWith("service.muelheim-ruhr.de/leistung/")
   );
 
-  // Mapping der gefilterten Seiten zu einem einfacheren Datenformat
+  // Map the filtered pages to a simpler structure containing URL, Hits, Key, and Errors
   const reportData = filteredPages.map((sortedPage) => {
     return {
-      URL: sortedPage[0], // Seiten-URL
-      Hits: sortedPage[1].count, // Anzahl der Hits auf der Seite
-      Schluessel: sortedPage[1].schluessel || "N/A", // Schlüssel der Seite
-      Fehler: sortedPage[1].fehler ? sortedPage[1].fehler.join(", ") : "Keine Fehler" // Fehler, falls vorhanden
+      URL: sortedPage[0], // Page URL
+      Hits: sortedPage[1].count, // Number of hits for the page
+      Key: sortedPage[1].key || "N/A", // The 'key' or 'N/A' if not available
+
+      // Add number errors and abbreviation errors to separate columns
+      NumberErrors: sortedPage[1].numberErrors
+        ? sortedPage[1].numberErrors.join(", ")
+        : "No Errors", // Number errors (comma-separated if multiple)
+      AbbreviationErrors: sortedPage[1].abbreviationErrors
+        ? sortedPage[1].abbreviationErrors.join(", ")
+        : "No Errors", // Abbreviation errors (comma-separated if multiple)
     };
   });
 
-  // Umwandeln der Report-Daten in ein Excel-Arbeitsblatt
+  // Convert the report data (JSON format) into a worksheet
   const ws = XLSX.utils.json_to_sheet(reportData);
 
-  // Erstellen eines neuen Arbeitsbuchs und Hinzufügen des Arbeitsblatts
+  // Create a new workbook and append the worksheet
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Report");
 
-  // Datei speichern auf dem Desktop
+  // Get the file path for saving the report on the desktop
   const desktopPath = path.join(
-    require("os").homedir(),
-    "Desktop",
-    "report.xlsx"
+    require("os").homedir(), // Get the user's home directory
+    "Desktop", // Path to the Desktop folder
+    "report.xlsx" // The name of the file to save
   );
 
-  // Excel-Datei speichern
+  // Write the Excel file to the specified path (desktop)
   XLSX.writeFile(wb, desktopPath);
 
   console.log(`Excel report saved to: ${desktopPath}`);
 
-  // Geloggte gefilterte Seiten mit Anzahl der Hits und Fehler
+  // Log the filtered pages with their 'count' and 'key' to the console
   for (const sortedPage of filteredPages) {
     console.log(
-      `Found ${sortedPage[1].count} hits for page ${sortedPage[0]} with Schluessel: ${sortedPage[1].schluessel || "N/A"} and Errors: ${sortedPage[1].fehler ? sortedPage[1].fehler.join(", ") : "Keine Fehler"}`
+      `Found ${sortedPage[1].count} hits for page ${sortedPage[0]} with Key: ${
+        sortedPage[1].key || "N/A"
+      }`
+    );
+    console.log(
+      `NumberErrors: ${
+        sortedPage[1].numberErrors
+          ? sortedPage[1].numberErrors.join(", ")
+          : "No Errors"
+      }`
+    );
+    console.log(
+      `AbbreviationErrors: ${
+        sortedPage[1].abbreviationErrors
+          ? sortedPage[1].abbreviationErrors.join(", ")
+          : "No Errors"
+      }`
     );
   }
 
@@ -60,14 +84,14 @@ function printReport(pages) {
   console.log("==============");
 }
 
-// Funktion zum Sortieren der Seiten basierend auf der Anzahl der Hits
+// Function to sort the pages based on their 'count' in descending order
 function sortPages(pages) {
   return Object.entries(pages).sort((a, b) => b[1].count - a[1].count);
 }
 
-// Funktion, die den Abgleich mit dem RSS-Feed ermöglichen könnte
+// Function that could enable matching RSS to the report
 function matchRSSToReport() {
-  // Hier könnte eine Logik für den Abgleich mit RSS implementiert werden
+  // Here, you could implement logic for matching the RSS feed
 }
 
 module.exports = {
