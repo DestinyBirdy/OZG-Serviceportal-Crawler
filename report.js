@@ -44,17 +44,13 @@ function printReport(pages) {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Report");
 
-  // Get the file path for saving the report on the desktop
-  const desktopPath = path.join(
-    require("os").homedir(), // Get the user's home directory
-    "Desktop", // Path to the Desktop folder
-    "report.xlsx" // The name of the file to save
-  );
+  // Get the file path for saving the report in the same directory as the code
+  const reportPath = path.join(__dirname, "report.xlsx"); // Save it in the same directory
 
-  // Write the Excel file to the specified path (desktop)
-  XLSX.writeFile(wb, desktopPath);
+  // Write the Excel file to the specified path (same directory as code)
+  XLSX.writeFile(wb, reportPath);
 
-  console.log(`Excel report saved to: ${desktopPath}`);
+  console.log(`Excel report saved to: ${reportPath}`);
 
   // Log the filtered pages with their 'count' and 'key' to the console
   for (const sortedPage of filteredPages) {
