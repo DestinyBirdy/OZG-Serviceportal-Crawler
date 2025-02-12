@@ -4,7 +4,7 @@ const { downloadAndParseRSS } = require("./parseRSS.js");
 const {
   downloadXlsxFile,
   extractColumnValues,
-  compareAndWriteMissingEntries,
+  compareAndWriteMissingAndMatchingEntries,
 } = require("./wspcheck.js");
 
 async function main() {
@@ -30,7 +30,7 @@ async function start() {
   await downloadXlsxFile();
 
   // After the file is downloaded, compare the entries and write missing ones
-  await compareAndWriteMissingEntries();
+  await compareAndWriteMissingAndMatchingEntries();
 
   console.log("Process complete.");
 }
