@@ -22,55 +22,47 @@ async function downloadXlsxFile() {
   }
 }
 
-function extractColumnValues(filePath, columnName) {
-  try {
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+// Function to compare the two Excel files and write missing entries to a new file
+function compareAndWriteMissingEntries() {
+  // Read the two files
+  const liveFile = xlsx.readFile("Live-11.11-1.xlsx");
+  const reportFile = xlsx.readFile("report.xlsx");
 
-    return jsonData
-      .map((row) => row[columnName])
-      .filter((value) => value !== undefined);
-  } catch (error) {
-    console.error("Error reading the Excel file:", error.message);
-    return [];
+  // Get the first sheet in both files (assuming the data is in the first sheet)
+  const liveSheet = liveFile.Sheets[liveFile.SheetNames[0]];
+  const reportSheet = reportFile.Sheets[reportFile.SheetNames[0]];
+
+  // Convert sheets to JSON
+  const liveData = xlsx.utils.sheet_to_json(liveSheet);
+  const reportData = xlsx.utils.sheet_to_json(reportSheet);
+
+  // Extract "Nummer" column from liveData and "Key" column from reportData
+  const liveNumbers = liveData.map((row) => row["Nummer"]);
+  const reportKeys = reportData.map((row) => row["Key"]);
+
+  // Find missing entries (Nummer from liveData not found in reportData)
+  const missingEntries = liveNumbers.filter((num) => !reportKeys.includes(num));
+
+  // If there are missing entries, create a new worksheet and write the missing values
+  if (missingEntries.length > 0) {
+    const missingSheet = xlsx.utils.json_to_sheet(
+      missingEntries.map((num) => ({ Nummer: num }))
+    );
+
+    // Create a new workbook and append the missing sheet
+    const newWorkbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(newWorkbook, missingSheet, "Missing Entries");
+
+    // Write the new workbook to a file
+    xlsx.writeFile(newWorkbook, "missingEntries.xlsx");
+    console.log(`Missing entries written to 'missingEntries.xlsx'`);
+  } else {
+    console.log("No missing entries found.");
   }
 }
-
-function compareAndWriteMatches(
-  sourceFile,
-  testFile,
-  sourceColumn,
-  testColumn
-) {
-  try {
-    const sourceValues = new Set(extractColumnValues(sourceFile, sourceColumn));
-    const workbook = xlsx.readFile(testFile);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    let jsonData = xlsx.utils.sheet_to_json(worksheet);
-
-    jsonData = jsonData.map((row) => {
-      row["Match Found"] = sourceValues.has(row[testColumn]) ? "Yes" : "No";
-      return row;
-    });
-
-    const newWorksheet = xlsx.utils.json_to_sheet(jsonData);
-    workbook.Sheets[sheetName] = newWorksheet;
-    xlsx.writeFile(workbook, testFile);
-    console.log("Updated test.xlsx with match results.");
-  } catch (error) {
-    console.error("Error processing the comparison:", error.message);
-  }
-}
-
-const sourceFile = path.join(__dirname, "Live-11.11-1.xlsx");
-const testFile = path.join(__dirname, "test.xlsx");
-compareAndWriteMatches(sourceFile, testFile, "Nummer", "Key");
 
 module.exports = {
   downloadXlsxFile,
   extractColumnValues,
-  compareAndWriteMatches,
+  compareAndWriteMissingEntries,
 };

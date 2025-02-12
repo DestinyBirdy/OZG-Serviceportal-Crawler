@@ -1,7 +1,11 @@
 const { crawlPage } = require("./crawler.js"); // Imports the crawlPage function from crawler.js
 const { printReport } = require("./report.js");
 const { downloadAndParseRSS } = require("./parseRSS.js");
-const { downloadXlsxFile, extractColumnValues } = require("./wspcheck.js");
+const {
+  downloadXlsxFile,
+  extractColumnValues,
+  compareAndWriteMissingEntries,
+} = require("./wspcheck.js");
 
 async function main() {
   if (process.argv.length < 3) {
@@ -17,9 +21,19 @@ async function main() {
   const pages = await crawlPage(baseURL, baseURL, {}); // Starts crawling the specified website
   printReport(pages);
 }
-main(); // Executes the main function
-//downloadAndParseRSS("https://fimportal.de/tools/rss/services", "99093049019002";
-//);
 
-//downloadXlsxFile();
-//extractColumnValues();
+async function start() {
+  // Call the main function to crawl and save data
+  await main();
+
+  // After the main function is complete, download the Live-11.11-1.xlsx file
+  await downloadXlsxFile();
+
+  // After the file is downloaded, compare the entries and write missing ones
+  await compareAndWriteMissingEntries();
+
+  console.log("Process complete.");
+}
+
+// Start the process by calling the start function
+start();
