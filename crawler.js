@@ -55,9 +55,6 @@ function analyzeErrors(pages) {
     // Add the errors to the page data
     pages[url].numberErrors = numberErrors;
     pages[url].abbreviationErrors = abbreviationErrors;
-
-    // Remove the HTML body after analysis to save memory
-    delete pages[url].htmlBody;
   }
 }
 

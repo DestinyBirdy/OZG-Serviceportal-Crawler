@@ -3,7 +3,6 @@ const { printReport } = require("./report.js");
 const { downloadAndParseRSS } = require("./parseRSS.js");
 const {
   downloadXlsxFile,
-  extractColumnValues,
   compareAndWriteMissingAndMatchingEntries,
 } = require("./wspcheck.js");
 
